@@ -1,9 +1,10 @@
-#Blockgrid to visualize different algorithms
+#Drawing a blockgrid using pygame to visualise different algorithms that randomly generates unique worlds
+#Project is created for the creation of images that are going to be used in my Bachelors thesis in Computer Engineering
 
 import pygame, sys, random, numpy, perlin_noise, noise
 
 
-#Colors
+#Color variables to simplify code
 GRAY = (75, 75, 75)
 DARK_GRAY = (25, 25, 25)
 BLACK = (0, 0, 0)
@@ -17,21 +18,23 @@ GRASS = (20, 110, 10)
 MOUNTAIN = (100, 100, 100)
 SNOW = (255, 255, 255)
 
-#Window size
+#Define window and block size for the program
 GRIDSIZE = 500
 SQUARE_SIZE = 2
 WINDOW_HEIGHT = SQUARE_SIZE*GRIDSIZE
 WINDOW_WIDTH = SQUARE_SIZE*GRIDSIZE
 
-#Player variables
+#Player variables(not fully used anymore)
 MOVESPEED = SQUARE_SIZE
 PLAYER_SIZE = SQUARE_SIZE
 
-#Number of random steps
+#Number of random steps in randomWalk() function
 STEPS = 100000
+
+#Integer value for creation of BSP rooms(not working currently)
 ROOMVALUE = 1
 
-#Position of red square
+#Position variables for the player object
 RED_POS_X = (GRIDSIZE//2)*SQUARE_SIZE
 RED_POS_Y = (GRIDSIZE//2)*SQUARE_SIZE
 
@@ -41,7 +44,7 @@ moveDown = False
 moveRight = False
 moveLeft = False
 
-#Create the array
+#Create the blockgrid array
 grid = []
 for row in range(GRIDSIZE):
     grid.append([])
