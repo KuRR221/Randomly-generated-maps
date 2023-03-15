@@ -1,18 +1,24 @@
 #Blockgrid to visualize different algorithms
 
-import pygame, sys, random
+import pygame, sys, random, numpy, perlin_noise, noise
+
 
 #Colors
-GRAY = (100, 100, 100)
-DARK_GRAY = (50, 50, 50)
+GRAY = (75, 75, 75)
+DARK_GRAY = (25, 25, 25)
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BLUE = (0, 200, 255)
 RED = (200, 0, 0)
 YELLOW = (200, 200, 0)
+OCEAN = (61, 78, 186)
+BEACH = (222, 217, 126)
+GRASS = (20, 110, 10)
+MOUNTAIN = (100, 100, 100)
+SNOW = (255, 255, 255)
 
 #Window size
-GRIDSIZE = 450
+GRIDSIZE = 500
 SQUARE_SIZE = 2
 WINDOW_HEIGHT = SQUARE_SIZE*GRIDSIZE
 WINDOW_WIDTH = SQUARE_SIZE*GRIDSIZE
@@ -23,6 +29,7 @@ PLAYER_SIZE = SQUARE_SIZE
 
 #Number of random steps
 STEPS = 100000
+ROOMVALUE = 1
 
 #Position of red square
 RED_POS_X = (GRIDSIZE//2)*SQUARE_SIZE
@@ -44,7 +51,7 @@ for row in range(GRIDSIZE):
 def main():
 
     pygame.init()
-    global SCREEN, CLOCK, SECOND_SURFACE, PLAYER, RED_POS_X, RED_POS_Y, moveUp, moveDown, moveRight, moveLeft, player_rect, path_rect_list, exit_rect, grid
+    global SCREEN, CLOCK, SECOND_SURFACE, PLAYER, RED_POS_X, RED_POS_Y, moveUp, moveDown, moveRight, moveLeft, player_rect, path_rect_list, exit_rect_list, grid
     SCREEN = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
     SECOND_SURFACE = pygame.Surface([SQUARE_SIZE,SQUARE_SIZE])
     PLAYER = pygame.Surface([PLAYER_SIZE,PLAYER_SIZE])
@@ -52,20 +59,9 @@ def main():
 
     while True:
 
-        SCREEN.fill(GRAY)
         path_rect_list = []
         exit_rect_list = []
-
-        for row in range (GRIDSIZE):
-            for col in range (GRIDSIZE):
-                if grid[row][col] == 0:
-                    path_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
-                    pygame.draw.rect(SCREEN, DARK_GRAY, path_rect)
-                    path_rect_list.append(path_rect)
-                if grid[row][col] == 2:
-                    exit_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, PLAYER_SIZE, PLAYER_SIZE)
-                    pygame.draw.circle(SCREEN, YELLOW, (row*SQUARE_SIZE+SQUARE_SIZE//2, col*SQUARE_SIZE+SQUARE_SIZE//2), SQUARE_SIZE/2)
-                    exit_rect_list.append(exit_rect)
+        #drawCave()
             
         player_rect = pygame.Rect(RED_POS_X, RED_POS_Y, PLAYER_SIZE, PLAYER_SIZE)
         pygame.draw.circle(SCREEN, RED, (RED_POS_X+SQUARE_SIZE//2, RED_POS_Y+SQUARE_SIZE//2), PLAYER_SIZE/2)
@@ -86,7 +82,8 @@ def main():
                 RED_POS_Y = (GRIDSIZE//2)*SQUARE_SIZE
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                randomWalk()
+                resetGrid()
+                PerlinMap()
                 RED_POS_X = (GRIDSIZE//2)*SQUARE_SIZE
                 RED_POS_Y = (GRIDSIZE//2)*SQUARE_SIZE
 
@@ -132,6 +129,19 @@ def checkPos(x,y):
         return 2
     else:
         return 0
+    
+def drawCave():
+    SCREEN.fill(GRAY)
+    for row in range (GRIDSIZE):
+        for col in range (GRIDSIZE):
+            if grid[row][col] == 0:
+                path_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+                pygame.draw.rect(SCREEN, DARK_GRAY, path_rect)
+                path_rect_list.append(path_rect)
+            if grid[row][col] == 2:
+                exit_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, PLAYER_SIZE, PLAYER_SIZE)
+                pygame.draw.circle(SCREEN, YELLOW, (row*SQUARE_SIZE+SQUARE_SIZE//2, col*SQUARE_SIZE+SQUARE_SIZE//2), SQUARE_SIZE/2)
+                exit_rect_list.append(exit_rect)
 
 def randomWalk():
     x = GRIDSIZE//2
@@ -155,7 +165,65 @@ def randomWalk():
             if x > 0:
                 x = x - 1
                 grid[x][y] = 1
+    drawCave()
     createExit()
+
+def randomPartition():
+    firstWall = random.randint(0,GRIDSIZE-1)
+    print(firstWall)
+    yWall = (GRIDSIZE-1)
+    print(yWall)
+    for value in range (ROOMVALUE):
+        createVerticalWall(firstWall, yWall)
+
+    """for wall in range (1):
+        yWall = random.randint(0,GRIDSIZE-1)
+        xWall = random.randint(0,GRIDSIZE-1)
+        for y in range (0, GRIDSIZE):
+            if grid[yWall][y] == 1:
+                yWall = random.randint(0,GRIDSIZE-1)
+            else:
+                grid[yWall][y] = 1
+        for x in range (0, GRIDSIZE):
+            if grid[x][xWall] == 1:
+                xWall = random.randint(0,GRIDSIZE-1)
+            else:
+                grid[x][xWall] = 1"""
+
+def createVerticalWall(x,y):
+    grid[25][1] = 1
+    for i in range (0,y):
+        grid[x][i] = 1
+
+def createXWall(x,y):
+    not_good = 1
+
+def PerlinMap():
+    seed = random.randint(0,10000)
+    for row in range(GRIDSIZE):
+        for column in range(GRIDSIZE):
+            grid[row][column] = noise.pnoise3(row/GRIDSIZE, column/GRIDSIZE, seed, octaves=9, persistence=0.6,lacunarity=2)
+    drawPerlin()
+
+def drawPerlin():
+    SCREEN.fill(RED)
+    for row in range (GRIDSIZE):
+        for col in range (GRIDSIZE):
+            if grid[row][col] < -0.01:
+                map_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE)
+                pygame.draw.rect(SCREEN, OCEAN, map_rect)
+            elif grid[row][col] < 0.01:
+                map_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, PLAYER_SIZE, PLAYER_SIZE)
+                pygame.draw.rect(SCREEN, BEACH, map_rect)
+            elif grid[row][col] < 0.12:
+                map_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, PLAYER_SIZE, PLAYER_SIZE)
+                pygame.draw.rect(SCREEN, GRASS, map_rect)
+            elif grid[row][col] < 0.2:
+                map_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, PLAYER_SIZE, PLAYER_SIZE)
+                pygame.draw.rect(SCREEN, MOUNTAIN, map_rect)
+            elif grid[row][col] < 1:
+                map_rect = pygame.Rect(row*SQUARE_SIZE, col*SQUARE_SIZE, PLAYER_SIZE, PLAYER_SIZE)
+                pygame.draw.rect(SCREEN, SNOW, map_rect)
 
 def createExit():
     rand1 = random.randint(0, GRIDSIZE-1)
