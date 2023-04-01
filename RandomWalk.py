@@ -19,8 +19,8 @@ MOUNTAIN = (100, 100, 100)
 SNOW = (255, 255, 255)
 
 #Define window and block size for the program
-GRIDSIZE = 500
-SQUARE_SIZE = 2
+GRIDSIZE = 250
+SQUARE_SIZE = 4
 WINDOW_HEIGHT = SQUARE_SIZE*GRIDSIZE
 WINDOW_WIDTH = SQUARE_SIZE*GRIDSIZE
 
@@ -29,7 +29,7 @@ MOVESPEED = SQUARE_SIZE
 PLAYER_SIZE = SQUARE_SIZE
 
 #Number of random steps in randomWalk() function
-STEPS = 100000
+STEPS = 200000
 
 #Integer value for creation of BSP rooms(not working currently)
 ROOMVALUE = 1
@@ -46,15 +46,20 @@ moveLeft = False
 
 #Create the blockgrid array
 grid = []
+secondGrid = []
 for row in range(GRIDSIZE):
     grid.append([])
     for column in range(GRIDSIZE):
         grid[row].append(0)
+for row in range(GRIDSIZE):
+    secondGrid.append([])
+    for column in range(GRIDSIZE):
+        secondGrid[row].append(0)
 
 def main():
 
     pygame.init()
-    global SCREEN, CLOCK, SECOND_SURFACE, PLAYER, RED_POS_X, RED_POS_Y, moveUp, moveDown, moveRight, moveLeft, player_rect, path_rect_list, exit_rect_list, grid
+    global SCREEN, CLOCK, SECOND_SURFACE, PLAYER, RED_POS_X, RED_POS_Y, moveUp, moveDown, moveRight, moveLeft, player_rect, path_rect_list, exit_rect_list, grid, secondGrid
     SCREEN = pygame.display.set_mode([WINDOW_WIDTH, WINDOW_HEIGHT])
     SECOND_SURFACE = pygame.Surface([SQUARE_SIZE,SQUARE_SIZE])
     PLAYER = pygame.Surface([PLAYER_SIZE,PLAYER_SIZE])
@@ -80,13 +85,16 @@ def main():
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 resetGrid()
-                randomWalk()
+                #randomWalk()
+                cellAutomata()
                 RED_POS_X = (GRIDSIZE//2)*SQUARE_SIZE
                 RED_POS_Y = (GRIDSIZE//2)*SQUARE_SIZE
 
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                resetGrid()
-                PerlinMap()
+                #resetGrid()
+                #PerlinMap()
+                cellAutomate()
+                drawCave()
                 RED_POS_X = (GRIDSIZE//2)*SQUARE_SIZE
                 RED_POS_Y = (GRIDSIZE//2)*SQUARE_SIZE
 
@@ -171,6 +179,47 @@ def randomWalk():
     drawCave()
     createExit()
 
+def cellAutomata():
+    for row in range(2,GRIDSIZE-2):
+        for col in range(2,GRIDSIZE-2):
+            randomint = random.randint(0,100)
+            if randomint < 45:
+                grid[row][col] = 1
+            else:
+                grid[row][col] = 0
+    """for i in range(3):
+        cellAutomate()"""
+    drawCave()
+    
+
+def cellAutomate():
+    for row in range(2,GRIDSIZE-2):
+        for col in range(2,GRIDSIZE-2):
+            if grid[row][col] == 1 and checkNeighbors(row, col) >= 7:
+                secondGrid[row][col] = 0
+            if grid[row][col] == 0 and checkNeighbors(row, col) <= 4:
+                secondGrid[row][col] = 1
+    transferGrid()
+    print("yay")
+
+def transferGrid():
+    for row in range(GRIDSIZE):
+        for col in range(GRIDSIZE):
+            grid[row][col] = secondGrid[row][col]
+
+def checkNeighbors(row, col):
+    wallCount = 0
+    for y in range(0,3):
+        for x in range(0,3):
+            #print(row-1+x, col-1+y)
+            if grid[row-1+x][col-1+y] == 0:
+                wallCount += 1
+                
+    if grid[row][col] == 0:
+        wallCount -= 1
+
+    return wallCount
+
 def randomPartition():
     firstWall = random.randint(0,GRIDSIZE-1)
     print(firstWall)
@@ -205,7 +254,7 @@ def PerlinMap():
     seed = random.randint(0,10000)
     for row in range(GRIDSIZE):
         for column in range(GRIDSIZE):
-            grid[row][column] = noise.pnoise3(row/GRIDSIZE, column/GRIDSIZE, seed, octaves=9, persistence=0.6,lacunarity=2)
+            grid[row][column] = noise.pnoise3(row/GRIDSIZE, column/GRIDSIZE, seed, octaves=12, persistence=0.6,lacunarity=2)
     drawPerlin()
 
 def drawPerlin():
